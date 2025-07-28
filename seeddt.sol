@@ -5,19 +5,24 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract SeedDT is ERC20, Ownable {
+// USDT : 0xbDeaD2A70Fe794D2f97b37EFDE497e68974a296d
+// Valt : 0x1957Fe4B931cc31f350D5c99925d0e87C19EBE8c
+
+contract SeedDT_v1 is ERC20, Ownable {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable usdt;
     address public vault;
 
     uint256 public constant MAX_SUPPLY = 100_000_000 * 1e18;
-    uint256 public constant LOCK_DURATION = 1080; // 18 menit
-    uint256 public constant REWARD_START_DELAY = 360; // 6 menit
-    uint256 public constant REWARD_INTERVAL = 60; // 1 menit
-    uint256 public constant REWARD_PERCENT_PER_MONTH = 100; // 1%
+    uint256 public constant SECONDS_PER_MONTH = 30 days;
+
+    uint256 public constant LOCK_DURATION = 36 * SECONDS_PER_MONTH; // 3 years
+    uint256 public constant REWARD_START_DELAY = 12 * SECONDS_PER_MONTH; // 1 year lock
+    uint256 public constant REWARD_INTERVAL = 1 * SECONDS_PER_MONTH; // 2 years linear unlock (permonths)
+    uint256 public constant REWARD_PERCENT_PER_MONTH = 100;  // 1% (calculation yield 8%)
     uint256 public constant BASIS_POINT = 10000;
-    uint256 public constant MAX_MONTHS = 12; // Max 12 bulan = 12%
+    uint256 public constant MAX_MONTHS = 12; 
     uint8 private constant USDT_DECIMALS = 6;
 
     struct Investment {
@@ -55,7 +60,7 @@ contract SeedDT is ERC20, Ownable {
     }
 
     function buy(uint256 usdtAmount) external {
-        require(usdtAmount >= 1 * 10**USDT_DECIMALS, "Minimum 1 USDT");
+        require(usdtAmount >= 100000 * 10**USDT_DECIMALS, "Minimum 100000 USDT");
 
         usdt.safeTransferFrom(msg.sender, vault, usdtAmount);
 
@@ -212,12 +217,10 @@ contract SeedDT is ERC20, Ownable {
             BASIS_POINT;
     }
 
-    // Minting by owner (capped by MAX_SUPPLY)
     function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
     }
 
-    // Burning by user
     function burn(uint256 amount) external {
         _burn(msg.sender, amount);
     }
